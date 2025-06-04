@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" class="font-mono">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>H2O Game</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to bottom, #b3e0ff, #e6f7ff);
+        }
+
+        .pixel-border {
+            border: 1px solid #ddd;
+            image-rendering: pixelated;
+        }
+
+        .atom-circle {
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: absolute;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .atom-h {
+            width: 36px;
+            height: 36px;
+        }
+
+        .atom-o {
+            width: 44px;
+            height: 44px;
+        }
+
+        .molecule-h2o {
+            position: absolute;
+            width: 64px;
+            height: 64px;
+        }
+
+        .molecule-h2o .h {
+            width: 20px;
+            height: 20px;
+            top: 30px;
+            left: 8px;
+        }
+
+        .molecule-h2o .o {
+            width: 30px;
+            height: 30px;
+            top: 10px;
+            left: 22px;
+        }
+
+        .molecule-h2o .h2 {
+            width: 20px;
+            height: 20px;
+            top: 30px;
+            left: 42px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen items-center p-2">
+
+    <!-- Header -->
+    <header class="text-center text-xl sm:text-2xl font-bold my-4 text-blue-700">
+        H₂O Game
+    </header>
+
+    <!-- Atom Counter -->
+    <div class="fixed top-2 right-2 bg-white bg-opacity-80 px-3 py-1 text-xs font-bold rounded pixel-border z-50 shadow">
+        Total Atoms: <span x-text="countAtoms()"></span>
+    </div>
+
+    <!-- Game Board -->
+    <div
+        x-data="gameBoard"
+        class="grid grid-cols-10 gap-[1px] pixel-border bg-white"
+        style="width: fit-content;"
+    >
+        <template x-for="row in 10" :key="row">
+            <template x-for="col in 10" :key="`${row}-${col}`">
+                <div class="w-16 h-16 bg-white relative pixel-border overflow-hidden">
+                    <template x-if="atoms[`${row}-${col}`]">
+                        <div>
+                            <template x-if="atoms[`${row}-${col}`][0].symbol === 'H₂O'">
+                                <div class="molecule-h2o">
+                                    <div class="atom-circle bg-blue-300 h h1">H</div>
+                                    <div class="atom-circle bg-red-300 o">O</div>
+                                    <div class="atom-circle bg-blue-300 h h2">H</div>
+                                </div>
+                            </template>
+                            <template x-if="atoms[`${row}-${col}`][0].symbol !== 'H₂O'">
+                                <div
+                                    class="atom-circle"
+                                    :class="{
+                                        'atom-h bg-blue-300': atoms[`${row}-${col}`][0].symbol === 'H',
+                                        'atom-o bg-red-300': atoms[`${row}-${col}`][0].symbol === 'O',
+                                        'atom-h bg-yellow-300': atoms[`${row}-${col}`][0].symbol === 'N',
+                                    }"
+                                    style="top: 50%; left: 50%; transform: translate(-50%, -50%);"
+                                    x-text="atoms[`${row}-${col}`][0].symbol"
+                                ></div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </template>
+    </div>
+
+    <!-- Buttons -->
+    <div class="my-4">
+        <button
+            @click="toggleGame"
+            class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded pixel-border"
+            x-text="running ? 'Stop Game' : 'Start Game'"
+        ></button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full mt-10 p-3 text-center text-gray-500 text-xs sm:text-sm border-t border-gray-300">
+        <p class="tracking-wide">
+            Made with 🚀 and 🍑 by <span class="text-indigo-600 hover:text-indigo-500 transition">Tyyrok</span> | 2025
+        </p>
+    </footer>
+
+    <!-- Alpine Component -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('gameBoard', () => ({
+                atoms: {},
+                positions: {},
+
+                running: false,
+
+                init() {
+                    this.generateRandomAtoms();
+                },
+
+                toggleGame() {
+                    this.running = !this.running;
+                    if (this.running) {
+                        this.startLoop();
+                    }
+                },
+
+                generateRandomAtoms() {
+                    const options = [
+                        { symbol: 'H', color: 'bg-blue-300' },
+                        { symbol: 'O', color: 'bg-red-300' },
+                        { symbol: 'N', color: 'bg-yellow-300' },
+                        { symbol: 'H₂O', color: 'bg-green-300' }
+                    ];
+                    for (let row = 1; row <= 10; row++) {
+                        for (let col = 1; col <= 10; col++) {
+                            const key = `${row}-${col}`;
+                            this.atoms[key] = [options[Math.floor(Math.random() * options.length)]];
+                        }
+                    }
+                    console.log(this.atoms)
+                },
+
+                countAtoms() {
+                    return Object.values(this.atoms).reduce((acc, list) => acc + list.length, 0);
+                },
+
+                startLoop() {
+                    setInterval(() => {
+                        if (!this.running) return;
+                        this.generateRandomAtoms();
+                    }, 2000);
+                }
+            }));
+        });
+    </script>
+</body>
+</html>
