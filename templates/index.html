@@ -38,13 +38,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 32px;  /* Adjust as needed */
+            width: 32px; /* Adjust to match the SVG's viewBox width */
             height: 32px; /* Adjust as needed */
         }
 
         .atom-svg {
             width: 100%;
-            height: 100%;
+            height: auto; /* Maintain aspect ratio*/
           }
 
         .molecule-h2o {
@@ -104,31 +104,13 @@
                     class="w-14 h-14 bg-gray-100 relative pixel-border overflow-hidden cursor-pointer"
                     @click="handleCellClick(row, col)">
                     <template x-if="atoms[`${row}-${col}`]">
-                        <div>
-                            <template x-if="atoms[`${row}-${col}`][0].symbol === 'H₂O'">
-                                <div class="molecule-h2o">
-                                    <div class="atom-circle bg-gray-300 h h1">H</div>
-                                    <div class="atom-circle bg-red-500 o">O</div>
-                                    <div class="atom-circle bg-gray-300 h h2">H</div>
-                                </div>
-                            </template>
-                            <template x-if="atoms[`${row}-${col}`][0].symbol !== 'H₂O'">
-                                <div class="atom-container" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                                  <template x-if="getAtomSvg(atoms[`${row}-${col}`][0].symbol)">
-                                    <div
-                                      class="atom-svg"
-                                      x-html="getAtomSvg(atoms[`${row}-${col}`][0].symbol)"
-                                    ></div>
-                                  </template>
-                                  <template x-else>
-                                    <div class="atom-circle">
-                                      <span x-text="atoms[`${row}-${col}`][0].symbol"></span>
-                                    </div>
-                                  </template>
-                                </div>
-                              </template>
+                        <div class="atom-container" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                          <div
+                            class="atom-svg"
+                            x-html="getAtomSvg(atoms[`${row}-${col}`][0].symbol)"
+                          ></div>
                         </div>
-                    </template>
+                      </template>
                 </div>
             </template>
         </template>
@@ -174,7 +156,7 @@
                         { symbol: 'H', color: 'bg-blue-300' },
                         { symbol: 'O', color: 'bg-red-300' },
                         { symbol: 'N', color: 'bg-yellow-300' },
-                        { symbol: 'H₂O', color: 'bg-green-300' }
+                        { symbol: 'H2O', color: 'bg-green-300' }
                     ];
                     for (let row = 1; row <= 10; row++) {
                         for (let col = 1; col <= 8; col++) {
@@ -279,11 +261,50 @@
                     <circle cx="16" cy="16" r="14" fill="url(#nitrogenGradient)" filter="url(#dropShadow)" />
                     <text x="16" y="22" text-anchor="middle" font-size="16" font-family="sans-serif" fill="white">N</text>
                     </svg>`,
-                    H2O: `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="16" cy="16" r="10" fill="#81D4FA" />
-                            <text x="16" y="22" text-anchor="middle" font-size="10" font-family="sans-serif" fill="#0D47A1">H₂O</text>
-                          </svg>` // Example (Modify as needed)
-                  },
+                    H2O: `<svg width="48" height="48" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="hydrogenGradient" cx="30%" cy="30%" r="70%" fx="30%" fy="30%">
+                        <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                        <stop offset="70%" style="stop-color:#e0e0e0;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#a0a0a0;stop-opacity:1" />
+                        </radialGradient>
+                        <radialGradient id="oxygenGradient" cx="30%" cy="30%" r="70%" fx="30%" fy="30%">
+                        <stop offset="0%" style="stop-color:#ff8a80;stop-opacity:1" />
+                        <stop offset="70%" style="stop-color:#f44336;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#b71c1c;stop-opacity:1" />
+                        </radialGradient>
+                        <filter id="dropShadow">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
+                        <feOffset dx="2" dy="2" in="blur" result="offsetBlur"/>
+                        <feComponentTransfer>
+                            <feFuncA type="linear" slope="0.5"/>
+                        </feComponentTransfer>
+                        <feMerge>
+                            <feMergeNode in="offsetBlur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- Oxygen Atom (Larger) -->
+                    <g transform="translate(12,0)">  <!-- Center Oxygen at the top -->
+                        <circle cx="24" cy="30" r="30" fill="url(#oxygenGradient)" filter="url(#dropShadow)" />  <!-- Increased radius -->
+                        <text x="24" y="43" text-anchor="middle" font-size="32" font-family="sans-serif" fill="white">O</text>
+                    </g>
+
+                    <!-- Hydrogen Atom 1 (Bottom Left) -->
+                    <g transform="translate(-4,48)">  <!-- Position bottom left -->
+                        <circle cx="18" cy="18" r="18" fill="url(#hydrogenGradient)" filter="url(#dropShadow)" /> <!-- Smaller radius -->
+                        <text x="18" y="22" text-anchor="middle" font-size="18" font-family="sans-serif" fill="#424242">H</text>
+                    </g>
+
+                    <!-- Hydrogen Atom 2 (Bottom Right) -->
+                    <g transform="translate(28,48)">  <!-- Position bottom right -->
+                        <circle cx="30" cy="18" r="18" fill="url(#hydrogenGradient)" filter="url(#dropShadow)" /> <!-- Smaller radius -->
+                        <text x="30" y="22" text-anchor="middle" font-size="18" font-family="sans-serif" fill="#424242">H</text>
+                    </g>
+                    </svg>`
+                                    },
                   getAtomSvg(symbol) {
                     return this.atomSvgs[symbol] || '';
                   }
