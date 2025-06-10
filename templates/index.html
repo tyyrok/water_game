@@ -74,9 +74,19 @@
             left: 34px;
         }
 
+        .w-14 {
+            width: 3.5rem;
+          }
+        
+        .h-14 {
+            height: 3.5rem;
+        }
+
         .selected {
-            transform: scale(1.2) translate(-40%, -40%) !important;
-            border: 2px solid #38bdf8;
+            transform: scale(1.1) !important;
+            border-radius: 10px; /* Rounded corners */
+            box-shadow: 0 0 8px 2px rgba(56, 189, 248, 0.5);
+            z-index: 10;     
         }
     </style>
 </head>
@@ -102,7 +112,8 @@
             <template x-for="col in 8" :key="`${row}-${col}`">
                 <div                     
                     class="w-14 h-14 bg-gray-100 relative pixel-border overflow-hidden cursor-pointer"
-                    @click="handleCellClick(row, col)">
+                    @click="handleCellClick(row, col)"
+                    :class="{ 'selected': selectedCell === `${row}-${col}` }">
                     <template x-if="atoms[`${row}-${col}`]">
                         <div class="atom-container" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
                           <div
