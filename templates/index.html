@@ -150,6 +150,7 @@
                 positions: {},
                 selectedCell: null,
                 running: false,
+                selected: null,
 
                 init() {
                     this.generateRandomAtoms();
@@ -193,6 +194,17 @@
                     const key = `${row}-${col}`;
                     this.selectedCell = key;
                     const current = this.atoms[key];
+                    if (!this.selected) {
+                        this.selected = { row, col };
+                    } else {
+                        let c = null;
+                        prev_key = `${this.selected.row}-${this.selected.col}`
+                        c = this.atoms[key];
+                        this.atoms[key] = this.atoms[prev_key];
+                        this.atoms[prev_key] = c;
+                        this.selected = null;
+                        this.selectedCell = null;
+                    }
                 
                     // Example logic: Toggle between H and O
                     /*
