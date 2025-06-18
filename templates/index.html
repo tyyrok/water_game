@@ -38,13 +38,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 32px; /* Adjust to match the SVG's viewBox width */
-            height: 32px; /* Adjust as needed */
+            width: 32px;
+            height: 32px;
         }
 
         .atom-svg {
             width: 100%;
-            height: auto; /* Maintain aspect ratio*/
+            height: auto;
           }
 
         .molecule-h2o {
@@ -82,12 +82,38 @@
             height: 3.5rem;
         }
 
+        .h-full {
+            height: 100%;
+        }
+
         .selected {
             transform: scale(1.1) !important;
             border-radius: 10px; /* Rounded corners */
             box-shadow: 0 0 8px 2px rgba(56, 189, 248, 0.5);
             z-index: 10;     
         }
+
+        .flask-container {
+            position: relative;
+            width: 50px;
+            height: calc(3.5rem * 10);
+            border: 3px solid #3b82f6;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #e0f2fe;
+        }
+      
+        .flask-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            transition: height 0.5s ease-in-out;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            background: linear-gradient(to top, #3b82f6, #60a5fa);
+          }
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-2">
@@ -97,42 +123,50 @@
         H₂O Game
     </header>
 
-    <!-- Atom Counter -->
+    <!-- Atom Counter 
     <div class="fixed top-2 right-2 bg-white bg-opacity-80 px-3 py-1 text-xs font-bold rounded pixel-border z-50 shadow">
         Total Atoms: <span x-text="countAtoms()"></span>
     </div>
+    -->
 
-    <!-- Game Board -->
-    <div
-        x-data="gameBoard"
-        class="grid grid-cols-8 gap-[2px]"
-        style="width: fit-content;"
-    >
-        <template x-for="row in 10" :key="row">
-            <template x-for="col in 8" :key="`${row}-${col}`">
-                <div                     
-                    class="w-14 h-14 bg-gray-100 relative pixel-border overflow-hidden cursor-pointer"
-                    @click="handleCellClick(row, col)"
-                    :class="{ 'selected': selectedCell === `${row}-${col}` }">
-                    <template x-if="atoms[`${row}-${col}`]">
-                        <div class="atom-container" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                          <div
-                            class="atom-svg"
-                            x-html="getAtomSvg(atoms[`${row}-${col}`][0].symbol)"
-                          ></div>
-                        </div>
-                      </template>
-                </div>
+    <div class="flex gap-4 items-start" x-data="gameBoard">
+        <!-- Game Board -->
+        <div
+            class="grid grid-cols-8 gap-[2px]"
+        >
+            <template x-for="row in 10" :key="row">
+                <template x-for="col in 8" :key="`${row}-${col}`">
+                    <div                     
+                        class="w-14 h-14 bg-gray-100 relative pixel-border overflow-hidden cursor-pointer"
+                        @click="handleCellClick(row, col)"
+                        :class="{ 'selected': selectedCell === `${row}-${col}` }">
+                        <template x-if="atoms[`${row}-${col}`]">
+                            <div class="atom-container" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                            <div
+                                class="atom-svg"
+                                x-html="getAtomSvg(atoms[`${row}-${col}`][0].symbol)"
+                            ></div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
             </template>
-        </template>
-        
-        <div class="col-span-full my-4 text-center">              
-            <button
-                @click="toggleGame"
-                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded pixel-border"
-                x-text="running ? 'Stop Game' : 'Start Game'"
-            ></button>
+            
+            <div class="col-span-full my-4 text-center">              
+                <button
+                    @click="toggleGame"
+                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded pixel-border"
+                    x-text="running ? 'Stop Game' : 'Start Game'"
+                ></button>
+            </div>
         </div>
+    
+        <!-- Flask -->
+        <div>
+            <div class="flask-container relative w-32 h-64 border-4 border-blue-400 rounded-b-full overflow-hidden mx-auto">
+                <div class="flask-fill absolute bottom-0 w-full transition-all duration-500 ease-in-out bg-blue-400" :style="{ height: flaskLevel + '%' }"></div>
+              </div>
+          </div>
     </div>
 
     <!-- Footer -->
@@ -151,6 +185,7 @@
                 selectedCell: null,
                 running: false,
                 selected: null,
+                flaskLevel: 20,
 
                 init() {
                     this.generateRandomAtoms();
@@ -176,7 +211,8 @@
                             this.atoms[key] = [options[Math.floor(Math.random() * options.length)]];
                         }
                     }
-                    console.log(this.atoms)
+                    console.log(this.atoms);
+                    this.waterLevel = Math.min(100, Math.floor((this.countAtoms() / 80) * 100));
                 },
 
                 countAtoms() {
@@ -188,6 +224,13 @@
                         if (!this.running) return;
                         this.generateRandomAtoms();
                     }, 2000);
+                },
+
+                updateFlaskLevel() {
+                    // Count number of H2O molecules and convert to percentage (just example logic)
+                    const total = Object.values(this.atoms).flat().length;
+                    const h2oCount = Object.values(this.atoms).flat().filter(a => a.symbol === 'H2O').length;
+                    this.flaskLevel = Math.min(100, Math.round((h2oCount / total) * 100));
                 },
 
                 handleCellClick(row, col) {
