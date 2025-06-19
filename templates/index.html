@@ -84,11 +84,6 @@
             left: 34px;
         }
 
-        //.grid > div {
-        //    width: calc(380px / 8) !important ;
-        // }
-
-        
         .h-14 {
             height: 3.5rem;
         }
@@ -177,6 +172,15 @@
               </div>
         </div>
     </div>
+    <!-- High Scores -->
+    <div class="w-full mt-8 bg-white/10 p-4 sm:p-6">
+        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-center text-blue-500">🏆 High Scores</h2>
+        <ol class="list-decimal list-inside space-y-2 text-blue-700 text-center">
+            <template x-for="(score, index) in highScores" :key="index">
+                <li x-text="score"></li>
+            </template>
+        </ol>
+    </div>
 
     <!-- Footer -->
     <footer class="w-full mt-10 p-3 text-center text-gray-500 text-xs sm:text-sm border-t border-gray-300">
@@ -185,7 +189,9 @@
         </p>
     </footer>
 
-    <!-- Alpine Component -->
+    <script type="application/json" id="highScores-data">
+        {{ .highScores }}
+    </script>
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('gameBoard', () => ({
@@ -195,16 +201,18 @@
                 running: false,
                 selected: null,
                 flaskLevel: 20,
+                inputLocked: true,
 
                 init() {
                     this.generateRandomAtoms();
                 },
 
                 toggleGame() {
+                    this.inputLocked = !this.inputLocked;
                     this.running = !this.running;
-                    if (this.running) {
-                        this.startLoop();
-                    }
+                    //if (this.running) {
+                    //    this.startLoop();
+                    //}
                 },
 
                 generateRandomAtoms() {
@@ -243,6 +251,7 @@
                 },
 
                 handleCellClick(row, col) {
+                    if (this.inputLocked) return;
                     const key = `${row}-${col}`;
                     this.selectedCell = key;
                     const current = this.atoms[key];
