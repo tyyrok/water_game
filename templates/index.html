@@ -137,7 +137,10 @@
 
     <div class="flex gap-4 items-start" x-data="gameBoard">
         <!-- Game Board -->
-        <div class="grid grid-cols-8 gap-[2px] w-full max-w-[380px]">
+        <div 
+            :class="{ 'border-4 border-red-500': showError }"
+            class="grid grid-cols-8 gap-[2px] w-full max-w-[380px]"
+        >
             <template x-for="row in 10" :key="row">
                 <template x-for="col in 8" :key="`${row}-${col}`">
                     <div                     
@@ -203,6 +206,7 @@
                 selected: [],
                 flaskLevel: 30,
                 inputLocked: true,
+                showError: false,
                 options: [
                     { symbol: 'H', color: 'bg-blue-300' },
                     { symbol: 'O', color: 'bg-red-300' },
@@ -219,7 +223,6 @@
                     this.running = !this.running;
                     if (this.running) {
                         this.connectWebSocket();
-                        //this.flaskLevel = 0;
                     } else {
                         this.sendEndGame();
                         this.flaskLevel = 30;
@@ -258,7 +261,6 @@
                 },
 
                 updateFlaskLevel() {
-                    // Count number of H2O molecules and convert to percentage (just example logic)
                     const total = Object.values(this.atoms).flat().length;
                     const h2oCount = Object.values(this.atoms).flat().filter(a => a.symbol === 'H2O').length;
                     this.flaskLevel = Math.min(100, Math.round((h2oCount / total) * 100));
@@ -283,15 +285,42 @@
                                 this.flaskLevel = data.data.waterLevel;
                                 this.swapCells(data.data.turns);
                                 this.inputLocked = false;
+                            } else if (data.data.status == "create_h2o") {
+                                this.flaskLevel = data.data.waterLevel;
+                                this.addH2o(data.data.turns, data.data.new);
+                                this.inputLocked = false;
+                            } else if (data.data.status == "fail") {
+                                this.inputLocked = false;
+                                this.selected = [];
+                                this.selectedCell = [];
+                                this.invalidTurn();
                             }
                         }
                     }
                 },
 
+                invalidTurn() {
+                    this.showError = true;
+                    setTimeout(() => {
+                        this.showError = false;
+                    }, 500);
+                },
+
+                addH2o(turns, newElems) {
+                    const key1 = `${turns[0].row+1}-${turns[0].col+1}`;
+                    const key2 = `${turns[1].row+1}-${turns[1].col+1}`;
+                    const key3 = `${turns[2].row+1}-${turns[2].col+1}`;
+                    this.atoms[key1] = [this.options[newElems[0]]];
+                    this.atoms[key2] = [this.options[newElems[1]]];
+                    this.atoms[key3] = [this.options[3]]
+                    this.selected = [];
+                    this.selectedCell = [];
+                },
+
                 swapCells(turns) {
                     console.log(turns);
-                    const keyA = `${turns[0].Row+1}-${turns[0].Col+1}`;
-                    const keyB = `${turns[1].Row+1}-${turns[1].Col+1}`;
+                    const keyA = `${turns[0].row+1}-${turns[0].col+1}`;
+                    const keyB = `${turns[1].row+1}-${turns[1].col+1}`;
                     let c = this.atoms[keyA];
                     this.atoms[keyA] = this.atoms[keyB];
                     this.atoms[keyB] = c;
@@ -307,20 +336,13 @@
                     if (this.selected.length == 0) {
                         this.selected.push({ row, col });
                     } else if (this.selected.length == 1) {
-                        let prev_key = `${this.selected[0].row}-${this.selected[0].col}`
+                        let prev_key = `${this.selected[0].row}-${this.selected[0].col}`;
                         if (["H", "O"].includes(this.atoms[prev_key][0].symbol) && ["H", "O"].includes(this.atoms[key][0].symbol)) {
                             this.selected.push({ row, col });
                         } else {
                             const turnData = [this.selected[0], {"row": row, "col": col}]
                             this.sendMove(turnData);
                             this.inputLocked = true;
-                            //let c = null;
-                            //prev_key = `${this.selected[0].row}-${this.selected[0].col}`
-                            //c = this.atoms[key];
-                            //this.atoms[key] = this.atoms[prev_key];
-                            //this.atoms[prev_key] = c;
-                            //this.selected = [];
-                            //this.selectedCell = [];
                         }
                     } else {
                         first_key = `${this.selected[0].row}-${this.selected[0].col}`
@@ -331,12 +353,9 @@
                             || (suppl_array[0] == "O" && suppl_array[1] == "H" && current[0].symbol == "H")
                             || (suppl_array[0] == "H" && suppl_array[1] == "O" && current[0].symbol == "H")
                         ) {
-                            for (const elem in this.selected) {
-                                this.atoms[`${elem.row}-${elem.col}`] = null;
-                            }
-                            this.atoms[key] = [this.options[3]];
-                            this.selected = [];
-                            this.selectedCell = [];
+                            const turnData = [this.selected[0], this.selected[1], {"row": row, "col": col}];
+                            this.sendMove(turnData);
+                            this.inputLocked = true;
                         } else {
                             this.selected = [];
                             this.selectedCell = [];
@@ -346,6 +365,7 @@
                 },
 
                 sendMove(data) {
+                    data = this.formatDataToSend(data);
                     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                         this.ws.send(JSON.stringify({
                             type: "move",
@@ -354,6 +374,13 @@
                             }
                         }));
                     }
+                },
+
+                formatDataToSend(data) {
+                    for (const elem in data) {
+                        elem.row = 10 - elem.row;
+                    }
+                    return data
                 },
 
                 sendEndGame() {

@@ -8,7 +8,15 @@ type Message struct {
 }
 
 type Turn struct {
-	Row, Col int
+	Row int `json:"row"`
+	Col int `json:"col"`
+}
+
+func (t *Turn) isEqual(other *Turn) bool {
+	if (t.Row == other.Row && t.Col == other.Col) {
+		return true
+	}
+	return false
 }
 
 type GameBoard struct {
@@ -26,5 +34,14 @@ func (b *GameBoard) initiate() {
 }
 
 func (b *GameBoard) swapElements(e1 *Turn, e2 *Turn) {
-	b.Cells[e1.Row][e2.Col], b.Cells[e2.Row][e2.Col] = b.Cells[e2.Row][e2.Col], b.Cells[e1.Row][e2.Col]
+	b.Cells[e1.Row][e1.Col], b.Cells[e2.Row][e2.Col] = b.Cells[e2.Row][e2.Col], b.Cells[e1.Row][e1.Col]
+}
+
+func (b *GameBoard) addWaterElement(turns []Turn) []int {
+	b.Cells[turns[2].Row][turns[2].Col] = 3
+	b.Cells[turns[0].Row][turns[0].Col] = rand.IntN(3)
+	b.Cells[turns[1].Row][turns[1].Col] = rand.IntN(3)
+	return []int{
+		b.Cells[turns[0].Row][turns[0].Col],
+		b.Cells[turns[1].Row][turns[1].Col]}
 }

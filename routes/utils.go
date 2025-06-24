@@ -23,7 +23,11 @@ func handleMessage(msg *Message, board *GameBoard) *Message{
 func handleTurn(msg *Message, board *GameBoard) *Message {
 	turns, err := validateTurn(msg)
 	if err != nil {
-		return &Message{Type: "turn validation error",}
+		return &Message{		
+			Type: "move",
+			Data: map[string]any{
+				"status": "fail",
+			},}
 	}
 	if len(turns) == 2 {
 		board.swapElements(&turns[0], &turns[1])
@@ -32,9 +36,29 @@ func handleTurn(msg *Message, board *GameBoard) *Message {
 				"status": "swap",
 				"turns": turns,
 				"waterLevel": board.WaterLevel}}
+	} else if len(turns) == 3 {
+		e1 := board.Cells[turns[0].Row][turns[0].Col]
+		e2 := board.Cells[turns[1].Row][turns[1].Col]
+		e3 := board.Cells[turns[2].Row][turns[2].Col]
+		if (
+			(e1 == 0 && e1 == e2 && e3 == 1) || (e1 == 1 && e2 == 0 && e2 == e3 ) || (e1 == 0 && e1 == e3 && e2 == 1)) {
+				newElems := board.addWaterElement(turns)
+				return &Message{Type: "move",
+					Data: map[string]any{
+					"status": "create_h2o",
+					"turns": turns,
+					"new": newElems,
+					"waterLevel": board.WaterLevel,
+				}}
+			}
 	}
 
-	return &Message{}
+	return &Message{
+		Type: "move",
+		Data: map[string]any{
+			"status": "fail",
+		},
+	}
 }
 
 
@@ -78,8 +102,14 @@ func validateTurn(msg *Message) ([]Turn, error) {
 		if fail {
 			break
 		}
-
-		turns = append(turns, Turn{Row: r-1, Col: c-1})
+		newTurn := Turn{Row: r-1, Col: c-1}
+		for _, existedElem := range turns {
+			if existedElem.isEqual(&newTurn) {
+				fail = true
+				break
+			}
+		}
+		turns = append(turns, newTurn)
 	}
 	if fail{
 		return []Turn{}, errors.New("turn validation error")
