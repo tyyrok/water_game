@@ -195,6 +195,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('gameBoard', () => ({
+                ws: null,
                 atoms: {},
                 positions: {},
                 selectedCell: [],
@@ -217,9 +218,12 @@
                     this.inputLocked = !this.inputLocked;
                     this.running = !this.running;
                     if (this.running) {
-                        this.flaskLevel = 0;
+                        this.connectWebSocket();
+                        //this.flaskLevel = 0;
                     } else {
+                        this.sendEndGame();
                         this.flaskLevel = 30;
+                        this.generateRandomAtoms();
                     }
                 },
 
@@ -230,7 +234,16 @@
                             this.atoms[key] = [this.options[Math.floor(Math.random() * this.options.length)]];
                         }
                     }
-                    this.waterLevel = Math.min(100, Math.floor((this.countAtoms() / 80) * 100));
+                },
+
+                updateBoard(board) {
+                    for (let row = 1; row <= 10; row++) {
+                        for (let col = 1; col <= 8; col++) {
+                            const key = `${row}-${col}`;
+                            this.atoms[key] = [this.options[board.cells[row-1][col-1]]];
+                        }
+                    }
+                    this.flaskLevel = board.waterLevel;
                 },
 
                 countAtoms() {
@@ -251,6 +264,41 @@
                     this.flaskLevel = Math.min(100, Math.round((h2oCount / total) * 100));
                 },
 
+                connectWebSocket() {
+                    this.ws = new WebSocket(`ws://${location.host}/api/start`);
+                    this.ws.onopen = () => console.log("WS connected");
+                    this.ws.onclose = (e) => {
+                        console.log("WS disconnected", e);
+                        this.inputLocked = true;
+                        window.location.replace("/");
+                    };
+                    this.ws.onerror = (e) => console.error("WS error", e);
+                    this.ws.onmessage = (e) => {
+                        const data = JSON.parse(e.data);
+                        console.log(data);
+                        if (data.type === "update_board") {
+                            this.updateBoard(data.data.board);
+                        } else if (data.type == "move") {
+                            if (data.data.status == "swap") {
+                                this.flaskLevel = data.data.waterLevel;
+                                this.swapCells(data.data.turns);
+                                this.inputLocked = false;
+                            }
+                        }
+                    }
+                },
+
+                swapCells(turns) {
+                    console.log(turns);
+                    const keyA = `${turns[0].Row+1}-${turns[0].Col+1}`;
+                    const keyB = `${turns[1].Row+1}-${turns[1].Col+1}`;
+                    let c = this.atoms[keyA];
+                    this.atoms[keyA] = this.atoms[keyB];
+                    this.atoms[keyB] = c;
+                    this.selected = [];
+                    this.selectedCell = [];
+                },
+
                 handleCellClick(row, col) {
                     if (this.inputLocked) return;
                     const key = `${row}-${col}`;
@@ -263,13 +311,16 @@
                         if (["H", "O"].includes(this.atoms[prev_key][0].symbol) && ["H", "O"].includes(this.atoms[key][0].symbol)) {
                             this.selected.push({ row, col });
                         } else {
-                            let c = null;
-                            prev_key = `${this.selected[0].row}-${this.selected[0].col}`
-                            c = this.atoms[key];
-                            this.atoms[key] = this.atoms[prev_key];
-                            this.atoms[prev_key] = c;
-                            this.selected = [];
-                            this.selectedCell = [];
+                            const turnData = [this.selected[0], {"row": row, "col": col}]
+                            this.sendMove(turnData);
+                            this.inputLocked = true;
+                            //let c = null;
+                            //prev_key = `${this.selected[0].row}-${this.selected[0].col}`
+                            //c = this.atoms[key];
+                            //this.atoms[key] = this.atoms[prev_key];
+                            //this.atoms[prev_key] = c;
+                            //this.selected = [];
+                            //this.selectedCell = [];
                         }
                     } else {
                         first_key = `${this.selected[0].row}-${this.selected[0].col}`
@@ -293,6 +344,27 @@
                     }
 
                 },
+
+                sendMove(data) {
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({
+                            type: "move",
+                            data: {
+                                "turns": data
+                            }
+                        }));
+                    }
+                },
+
+                sendEndGame() {
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({
+                            type: "end_game",
+                        }));
+                    }
+                    this.inputLocked = false;
+                },
+
                 atomSvgs: {
                     H: `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                     <defs>
