@@ -120,6 +120,48 @@
             justify-content: center;
             background: linear-gradient(to top, #3b82f6, #60a5fa);
           }
+                /* Popup Styles */
+                .popup-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.75); /* Semi-transparent background */
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000; /* Ensure it's on top of everything */
+                }
+        
+                .popup-content {
+                    background-color: white;
+                    padding: 2rem;
+                    border-radius: 0.5rem;
+                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+                    text-align: center;
+                }
+        
+                .popup-title {
+                    font-size: 1.5rem;
+                    font-weight: bold;
+                    margin-bottom: 1rem;
+                }
+        
+                .popup-button {
+                    background-color: #4caf50; /* Green */
+                    color: white;
+                    padding: 0.75rem 1.5rem;
+                    border: none;
+                    border-radius: 0.25rem;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: background-color 0.2s ease-in-out;
+                }
+        
+                .popup-button:hover {
+                    background-color: #3e8e41;
+                }
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-2">
@@ -174,6 +216,16 @@
                 <div class="flask-fill absolute bottom-0 w-full transition-all duration-500 ease-in-out bg-blue-400" :style="{ height: flaskLevel + '%' }"></div>
               </div>
         </div>
+
+        <!-- Game Won Popup -->
+        <div x-show="gameWon" class="popup-overlay">
+            <div class="popup-content">
+                <div class="popup-title">You Win!</div>
+                <p>Congratulations! You've successfully filled the flask!</p>
+                <button @click="gameWon = false" class="popup-button">Close</button>
+            </div>
+        </div>
+    
     </div>
     <!-- High Scores -->
     <div class="w-full mt-8 bg-white/10 p-4 sm:p-6">
@@ -207,11 +259,13 @@
                 flaskLevel: 30,
                 inputLocked: true,
                 showError: false,
+                gameWon: false,
                 options: [
                     { symbol: 'H', color: 'bg-blue-300' },
                     { symbol: 'O', color: 'bg-red-300' },
                     { symbol: 'N', color: 'bg-yellow-300' },
-                    { symbol: 'H2O', color: 'bg-green-300' }
+                    { symbol: 'N2', color: 'bg-yellow-100' },
+                    { symbol: 'H2O', color: 'bg-green-300' },
                 ],
 
                 init() {
@@ -272,7 +326,7 @@
                     this.ws.onclose = (e) => {
                         console.log("WS disconnected", e);
                         this.inputLocked = true;
-                        window.location.replace("/");
+                        //window.location.replace("/");
                     };
                     this.ws.onerror = (e) => console.error("WS error", e);
                     this.ws.onmessage = (e) => {
@@ -282,12 +336,35 @@
                             this.updateBoard(data.data.board);
                         } else if (data.type == "move") {
                             if (data.data.status == "swap") {
-                                this.flaskLevel = data.data.waterLevel;
                                 this.swapCells(data.data.turns);
-                                this.inputLocked = false;
+                                if ("newWaterLevel" in data.data) {
+                                    this.flaskLevel = data.data.waterLevel;
+                                    this.changeWaterLevel(data.data.newWaterLevel);
+                                }
+                                if ("win" in data.data) {
+                                    this.inputLocked = true;
+                                    this.running = false;
+                                    this.ws.close();
+                                    this.gameWon = true;
+                                } else{
+                                    this.inputLocked = false;
+                                }
                             } else if (data.data.status == "create_h2o") {
-                                this.flaskLevel = data.data.waterLevel;
                                 this.addH2o(data.data.turns, data.data.new);
+                                if ("newWaterLevel" in data.data) {
+                                    this.flaskLevel = data.data.waterLevel;
+                                    this.changeWaterLevel(data.data.newWaterLevel);
+                                }
+                                if ("win" in data.data) {
+                                    this.inputLocked = true;
+                                    this.running = false;
+                                    this.ws.close();
+                                    this.gameWon = true;
+                                } else{
+                                    this.inputLocked = false;
+                                }
+                            } else if (data.data.status == "create_n2") {
+                                this.addN2(data.data.turns, data.data.new);
                                 this.inputLocked = false;
                             } else if (data.data.status == "fail") {
                                 this.inputLocked = false;
@@ -296,6 +373,13 @@
                                 this.invalidTurn();
                             }
                         }
+                    }
+                },
+
+                changeWaterLevel(newValues) {
+                    for (let col = 1; col <= 8; col++) {
+                        const key = `1-${col}`;
+                        this.atoms[key] = [this.options[newValues[col-1]]];
                     }
                 },
 
@@ -312,7 +396,16 @@
                     const key3 = `${turns[2].row+1}-${turns[2].col+1}`;
                     this.atoms[key1] = [this.options[newElems[0]]];
                     this.atoms[key2] = [this.options[newElems[1]]];
-                    this.atoms[key3] = [this.options[3]]
+                    this.atoms[key3] = [this.options[4]]
+                    this.selected = [];
+                    this.selectedCell = [];
+                },
+
+                addN2(turns, newElems) {
+                    const key1 = `${turns[0].row+1}-${turns[0].col+1}`;
+                    const key2 = `${turns[1].row+1}-${turns[1].col+1}`;
+                    this.atoms[key1] = [this.options[newElems[0]]];
+                    this.atoms[key2] = [this.options[3]]
                     this.selected = [];
                     this.selectedCell = [];
                 },
@@ -501,7 +594,35 @@
                         <circle cx="30" cy="18" r="18" fill="url(#hydrogenGradient)" filter="url(#dropShadow)" /> <!-- Smaller radius -->
                         <text x="30" y="22" text-anchor="middle" font-size="18" font-family="sans-serif" fill="#424242">H</text>
                     </g>
-                    </svg>`
+                    </svg>`,
+                    N2: `<svg width="38" height="38" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                          <radialGradient id="nitrogenGradient" cx="30%" cy="30%" r="70%" fx="30%" fy="30%">
+                            <stop offset="0%" style="stop-color:#90caf9;stop-opacity:1" />  <!-- Lighter blue highlight -->
+                            <stop offset="70%" style="stop-color:#2196f3;stop-opacity:1" />  <!-- Base blue color -->
+                            <stop offset="100%" style="stop-color:#0d47a1;stop-opacity:1" />  <!-- Darker blue shadow -->
+                          </radialGradient>
+                          <filter id="dropShadow">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blur"/>
+                            <feOffset dx="2" dy="2" in="blur" result="offsetBlur"/>
+                            <feComponentTransfer>
+                                <feFuncA type="linear" slope="0.5"/> <!-- Reduce shadow opacity -->
+                            </feComponentTransfer>
+                            <feMerge>
+                              <feMergeNode in="offsetBlur" />
+                              <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                          </filter>
+                        </defs>
+                        <g transform="translate(8, 3)">
+                          <circle cx="18" cy="18" r="10" fill="url(#nitrogenGradient)" filter="url(#dropShadow)" />  <!-- First N, shifted -->
+                          <text x="16" y="22" text-anchor="middle" font-size="12" font-family="sans-serif" fill="white">N</text>
+                        </g>
+                        <g transform="translate(-8, -3)">
+                          <circle cx="18" cy="18" r="10" fill="url(#nitrogenGradient)" filter="url(#dropShadow)" />  <!-- Second N, shifted -->
+                          <text x="16" y="22" text-anchor="middle" font-size="12" font-family="sans-serif" fill="white">N</text>
+                        </g>
+                      </svg>`,
                 },
 
                 getAtomSvg(symbol) {

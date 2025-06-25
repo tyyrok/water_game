@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gin-gonic/gin"
 )
 
@@ -37,13 +36,9 @@ func NewRouter() *gin.Engine {
 }
 
 
-func Run(dbpool *pgxpool.Pool) {
+func Run() {
 	httpPort := os.Getenv("PORT")
 	router := NewRouter()
-	router.Use(func(ctx *gin.Context) {
-		ctx.Set("db", dbpool)
-		ctx.Next()
-	})
 	router.LoadHTMLGlob("templates/*")
 
 	v1 := router.Group("/api", CheckOrigin())

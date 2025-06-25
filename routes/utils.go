@@ -3,8 +3,6 @@ package routes
 import (
 	"errors"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
 )
 
 func handleMessage(msg *Message, board *GameBoard) *Message{
@@ -30,12 +28,40 @@ func handleTurn(msg *Message, board *GameBoard) *Message {
 			},}
 	}
 	if len(turns) == 2 {
+		if (board.Cells[turns[0].Row][turns[0].Col] == board.Cells[turns[1].Row][turns[1].Col]) && (board.Cells[turns[0].Row][turns[0].Col] == 2) {
+			newElems := board.addN2Element(turns)
+			return &Message{Type: "move",
+				Data: map[string]any{
+					"status": "create_n2",
+					"turns": turns,
+					"new": newElems,
+					"waterLevel": board.WaterLevel}}
+		}
 		board.swapElements(&turns[0], &turns[1])
+		ok := board.checkWaterLevel()
+		if !ok {
+			return &Message{Type: "move",
+				Data: map[string]any{
+					"status": "swap",
+					"turns": turns,
+					"waterLevel": board.WaterLevel}}
+		}
+		if board.WaterLevel == 100 {
+			return &Message{Type: "move",
+			Data: map[string]any{
+				"status": "swap",
+				"turns": turns,
+				"win": true,
+				"newWaterLevel": board.Cells[0],
+				"waterLevel": board.WaterLevel}}
+		}
 		return &Message{Type: "move",
 			Data: map[string]any{
 				"status": "swap",
 				"turns": turns,
+				"newWaterLevel": board.Cells[0],
 				"waterLevel": board.WaterLevel}}
+
 	} else if len(turns) == 3 {
 		e1 := board.Cells[turns[0].Row][turns[0].Col]
 		e2 := board.Cells[turns[1].Row][turns[1].Col]
@@ -43,11 +69,22 @@ func handleTurn(msg *Message, board *GameBoard) *Message {
 		if (
 			(e1 == 0 && e1 == e2 && e3 == 1) || (e1 == 1 && e2 == 0 && e2 == e3 ) || (e1 == 0 && e1 == e3 && e2 == 1)) {
 				newElems := board.addWaterElement(turns)
+				ok := board.checkWaterLevel()
+				if !ok {
+					return &Message{Type: "move",
+						Data: map[string]any{
+						"status": "create_h2o",
+						"turns": turns,
+						"new": newElems,
+						"waterLevel": board.WaterLevel,
+					}}
+				}
 				return &Message{Type: "move",
 					Data: map[string]any{
 					"status": "create_h2o",
 					"turns": turns,
 					"new": newElems,
+					"newWaterLevel": board.Cells[0],
 					"waterLevel": board.WaterLevel,
 				}}
 			}
@@ -59,11 +96,6 @@ func handleTurn(msg *Message, board *GameBoard) *Message {
 			"status": "fail",
 		},
 	}
-}
-
-
-func saveGameResult(board *GameBoard, ctx *gin.Context) {
-
 }
 
 func validateTurn(msg *Message) ([]Turn, error) {

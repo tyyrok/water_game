@@ -38,10 +38,39 @@ func (b *GameBoard) swapElements(e1 *Turn, e2 *Turn) {
 }
 
 func (b *GameBoard) addWaterElement(turns []Turn) []int {
-	b.Cells[turns[2].Row][turns[2].Col] = 3
+	b.Cells[turns[2].Row][turns[2].Col] = 4
 	b.Cells[turns[0].Row][turns[0].Col] = rand.IntN(3)
 	b.Cells[turns[1].Row][turns[1].Col] = rand.IntN(3)
 	return []int{
 		b.Cells[turns[0].Row][turns[0].Col],
 		b.Cells[turns[1].Row][turns[1].Col]}
+}
+
+func (b *GameBoard) addN2Element(turns []Turn) []int {
+	b.Cells[turns[1].Row][turns[1].Col] = 3
+	b.Cells[turns[0].Row][turns[0].Col] = rand.IntN(3)
+	return []int{
+		b.Cells[turns[0].Row][turns[0].Col]}
+}
+
+func (b *GameBoard) checkWaterLevel() bool {
+	isAllWater := true
+	for _, elem := range b.Cells[0] {
+		if elem != 4 {
+			isAllWater = false
+			break
+		}
+	}
+	if isAllWater {
+		b.changeWaterLevel()
+		return true
+	}
+	return false
+}
+
+func (b *GameBoard) changeWaterLevel() {
+	for i := range b.Cells[0] {
+		b.Cells[0][i] = rand.IntN(3)
+	}
+	b.WaterLevel += 25
 }

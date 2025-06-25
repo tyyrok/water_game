@@ -48,7 +48,6 @@ func gameHandler(ctx *gin.Context) {
 		mt, message, err := c.ReadMessage()
 		if err != nil {
 			log.Printf("Read msg error: %s", err)
-			saveGameResult(&board, ctx)
 			break
 		}
 		log.Printf("received: %s", message)
@@ -65,14 +64,12 @@ func gameHandler(ctx *gin.Context) {
 		}
 		res := handleMessage(&msg, &board)
 		if res.Type == "end_game"{
-			saveGameResult(&board, ctx)
 			break
 		}
 		ok := sendMessage(res, mt, c)
 		if !ok {
 			break
 		}
-
 	}
 }
 
