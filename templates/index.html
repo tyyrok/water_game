@@ -120,48 +120,60 @@
             justify-content: center;
             background: linear-gradient(to top, #3b82f6, #60a5fa);
           }
-                /* Popup Styles */
-                .popup-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0, 0, 0, 0.75); /* Semi-transparent background */
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 1000; /* Ensure it's on top of everything */
-                }
-        
-                .popup-content {
-                    background-color: white;
-                    padding: 2rem;
-                    border-radius: 0.5rem;
-                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-                    text-align: center;
-                }
-        
-                .popup-title {
-                    font-size: 1.5rem;
-                    font-weight: bold;
-                    margin-bottom: 1rem;
-                }
-        
-                .popup-button {
-                    background-color: #4caf50; /* Green */
-                    color: white;
-                    padding: 0.75rem 1.5rem;
-                    border: none;
-                    border-radius: 0.25rem;
-                    cursor: pointer;
-                    font-weight: bold;
-                    transition: background-color 0.2s ease-in-out;
-                }
-        
-                .popup-button:hover {
-                    background-color: #3e8e41;
-                }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75); /* Semi-transparent background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top of everything */
+        }
+
+        .popup-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .popup-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .popup-button {
+            background-color: #4caf50; /* Green */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .popup-button:hover {
+            background-color: #3e8e41;
+        }
+
+        .rule-item {
+            margin-bottom: 1rem;
+            line-height: 1.4;
+            text-align: left;
+        }
+
+        ol {
+            list-style-type: decimal;
+            padding-left: 20px;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen items-center p-2">
@@ -209,7 +221,6 @@
             </div>
         </div>
 
-    
         <!-- Flask -->
         <div>
             <div class="flask-container relative w-32 h-64 border-4 border-blue-400 rounded-b-full overflow-hidden mx-auto">
@@ -225,16 +236,20 @@
                 <button @click="gameWon = false" class="popup-button">Close</button>
             </div>
         </div>
+
+        <!-- Game Rules Popup -->
+        <div x-show="gameRules" class="popup-overlay">
+            <div class="popup-content">
+                <div class="popup-title">Game Rules:</div>
+                <ol>
+                    <li class="rule-item">Combine Hydrogen (H) and Oxygen (O) atoms to create a water molecule (H₂O).</li>
+                    <li class="rule-item">Move H₂O molecules to the bottom row of the game board.</li>
+                    <li class="rule-item">Fill the flask to win!</li>
+                </ol>
+                <button @click="gameRules = false" class="popup-button">Close</button>
+            </div>
+        </div>
     
-    </div>
-    <!-- High Scores -->
-    <div class="w-full mt-8 bg-white/10 p-4 sm:p-6">
-        <h2 class="text-xl sm:text-2xl font-bold mb-4 text-center text-blue-500">🏅 High Scores</h2>
-        <ol class="list-decimal list-inside space-y-2 text-blue-700 text-center">
-            <template x-for="(score, index) in highScores" :key="index">
-                <li x-text="score"></li>
-            </template>
-        </ol>
     </div>
 
     <!-- Footer -->
@@ -260,6 +275,7 @@
                 inputLocked: true,
                 showError: false,
                 gameWon: false,
+                gameRules: false,
                 options: [
                     { symbol: 'H', color: 'bg-blue-300' },
                     { symbol: 'O', color: 'bg-red-300' },
@@ -277,6 +293,7 @@
                     this.running = !this.running;
                     if (this.running) {
                         this.connectWebSocket();
+                        this.gameRules = true;
                     } else {
                         this.sendEndGame();
                         this.flaskLevel = 30;
@@ -331,7 +348,6 @@
                     this.ws.onerror = (e) => console.error("WS error", e);
                     this.ws.onmessage = (e) => {
                         const data = JSON.parse(e.data);
-                        console.log(data);
                         if (data.type === "update_board") {
                             this.updateBoard(data.data.board);
                         } else if (data.type == "move") {
@@ -411,7 +427,6 @@
                 },
 
                 swapCells(turns) {
-                    console.log(turns);
                     const keyA = `${turns[0].row+1}-${turns[0].col+1}`;
                     const keyB = `${turns[1].row+1}-${turns[1].col+1}`;
                     let c = this.atoms[keyA];
