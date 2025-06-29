@@ -9,7 +9,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/api
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/api -p 2
 
 FROM alpine:latest
 COPY --from=builder /app/api /app/api
