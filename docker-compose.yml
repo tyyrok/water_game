@@ -1,0 +1,11 @@
+services:
+  h2o_game:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    container_name: h2o_game
+    command: ["/app/api"]
+    ports:
+      - 80:80
