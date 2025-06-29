@@ -40,9 +40,9 @@
             align-items: center;
             justify-content: center;
             padding: 0px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            //top: 50%;
+            //left: 50%;
+            //transform: translate(-50%, -50%);
             width: 100%;
             height: 100%;
             max-width: 100%;
@@ -52,37 +52,13 @@
         .atom-svg {
             width: 80%;
             height: 80%;
-            max-width: 70%;
-            max-height: 70%;
-            object-fit: contain;
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            //object-fit: contain;
           }
-
-        .molecule-h2o {
-            position: absolute;
-            width: 64px;
-            height: 64px;
-        }
-
-        .molecule-h2o .h {
-            width: 20px;
-            height: 20px;
-            top: 30px;
-            left: 2px;
-        }
-
-        .molecule-h2o .o {
-            width: 30px;
-            height: 30px;
-            top: 10px;
-            left: 14px;
-        }
-
-        .molecule-h2o .h2 {
-            width: 20px;
-            height: 20px;
-            top: 30px;
-            left: 34px;
-        }
 
         .h-14 {
             height: 3.5rem;
@@ -182,12 +158,6 @@
     <header class="text-center text-xl sm:text-2xl font-bold my-4 text-blue-700">
         H₂O Game ⚛️
     </header>
-
-    <!-- Atom Counter 
-    <div class="fixed top-2 right-2 bg-white bg-opacity-80 px-3 py-1 text-xs font-bold rounded pixel-border z-50 shadow">
-        Total Atoms: <span x-text="countAtoms()"></span>
-    </div>
-    -->
 
     <div class="flex gap-4 items-start" x-data="gameBoard">
         <!-- Game Board -->
@@ -501,7 +471,7 @@
                 },
 
                 atomSvgs: {
-                    H: `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    H: `<svg width="80%" height="80%" viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <radialGradient id="hydrogenGradient" cx="30%" cy="30%" r="70%" fx="30%" fy="30%">
                         <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" /> <!-- Brighter highlight -->
@@ -523,7 +493,7 @@
                     <circle cx="16" cy="16" r="14" fill="url(#hydrogenGradient)" filter="url(#dropShadow)" />
                     <text x="16" y="22" text-anchor="middle" font-size="16" font-family="sans-serif" fill="#424242">H</text>
                     </svg>`,
-                    O: `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    O: `<svg width="80%" height="80%" viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <radialGradient id="oxygenGradient" cx="30%" cy="30%" r="70%" fx="30%" fy="30%">
                         <stop offset="0%" style="stop-color:#ff8a80;stop-opacity:1" />  <!-- Lighter red highlight -->
@@ -545,7 +515,7 @@
                     <circle cx="16" cy="16" r="14" fill="url(#oxygenGradient)" filter="url(#dropShadow)" />
                     <text x="16" y="22" text-anchor="middle" font-size="16" font-family="sans-serif" fill="white">O</text>
                     </svg>`,
-                    N: `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    N: `<svg width="80%" height="80%" viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <radialGradient id="nitrogenGradient" cx="30%" cy="30%" r="70%" fx="30%" fy="30%">
                         <stop offset="0%" style="stop-color:#90caf9;stop-opacity:1" />  <!-- Lighter blue highlight -->
@@ -567,7 +537,7 @@
                     <circle cx="16" cy="16" r="14" fill="url(#nitrogenGradient)" filter="url(#dropShadow)" />
                     <text x="16" y="22" text-anchor="middle" font-size="16" font-family="sans-serif" fill="white">N</text>
                     </svg>`,
-                    H2O: `<svg width="48" height="48" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+                    H2O: `<svg width="100%" height="100%" viewBox="0 0 96 96" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <radialGradient id="hydrogenGradient" cx="30%" cy="30%" r="70%" fx="30%" fy="30%">
                         <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
@@ -592,25 +562,29 @@
                         </filter>
                     </defs>
 
-                    <!-- Oxygen Atom (Larger) -->
-                    <g transform="translate(12,0)">  <!-- Center Oxygen at the top -->
-                        <circle cx="24" cy="30" r="30" fill="url(#oxygenGradient)" filter="url(#dropShadow)" />  <!-- Increased radius -->
-                        <text x="24" y="43" text-anchor="middle" font-size="32" font-family="sans-serif" fill="white">O</text>
-                    </g>
+                    <!-- Wrap everything in one centered group -->
+                    <g transform="translate(24, 16)">
+                        <!-- Oxygen -->
+                        <g>
+                        <circle cx="24" cy="24" r="28" fill="url(#oxygenGradient)" filter="url(#dropShadow)" />
+                        <text x="24" y="30" text-anchor="middle" font-size="28" font-family="sans-serif" fill="white">O</text>
+                        </g>
 
-                    <!-- Hydrogen Atom 1 (Bottom Left) -->
-                    <g transform="translate(-4,48)">  <!-- Position bottom left -->
-                        <circle cx="18" cy="18" r="18" fill="url(#hydrogenGradient)" filter="url(#dropShadow)" /> <!-- Smaller radius -->
-                        <text x="18" y="22" text-anchor="middle" font-size="18" font-family="sans-serif" fill="#424242">H</text>
-                    </g>
+                        <!-- Hydrogen Left -->
+                        <g transform="translate(-12, 32)">
+                        <circle cx="12" cy="12" r="20" fill="url(#hydrogenGradient)" filter="url(#dropShadow)" />
+                        <text x="12" y="16" text-anchor="middle" font-size="16" font-family="sans-serif" fill="#424242">H</text>
+                        </g>
 
-                    <!-- Hydrogen Atom 2 (Bottom Right) -->
-                    <g transform="translate(28,48)">  <!-- Position bottom right -->
-                        <circle cx="30" cy="18" r="18" fill="url(#hydrogenGradient)" filter="url(#dropShadow)" /> <!-- Smaller radius -->
-                        <text x="30" y="22" text-anchor="middle" font-size="18" font-family="sans-serif" fill="#424242">H</text>
+                        <!-- Hydrogen Right -->
+                        <g transform="translate(36, 32)">
+                        <circle cx="12" cy="12" r="20" fill="url(#hydrogenGradient)" filter="url(#dropShadow)" />
+                        <text x="12" y="16" text-anchor="middle" font-size="16" font-family="sans-serif" fill="#424242">H</text>
+                        </g>
                     </g>
-                    </svg>`,
-                    N2: `<svg width="38" height="38" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg">
+                    </svg>
+                    `,
+                    N2: `<svg width="100%" height="100%" viewBox="0 0 38 38" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                           <radialGradient id="nitrogenGradient" cx="30%" cy="30%" r="70%" fx="30%" fy="30%">
                             <stop offset="0%" style="stop-color:#90caf9;stop-opacity:1" />  <!-- Lighter blue highlight -->
