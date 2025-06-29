@@ -40,9 +40,6 @@
             align-items: center;
             justify-content: center;
             padding: 0px;
-            //top: 50%;
-            //left: 50%;
-            //transform: translate(-50%, -50%);
             width: 100%;
             height: 100%;
             max-width: 100%;
@@ -57,7 +54,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            //object-fit: contain;
           }
 
         .h-14 {
@@ -70,7 +66,7 @@
 
         .selected {
             transform: scale(1.1) !important;
-            border-radius: 10px; /* Rounded corners */
+            border-radius: 10px;
             box-shadow: 0 0 8px 2px rgba(56, 189, 248, 0.5);
             z-index: 10;     
         }
@@ -103,11 +99,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.75); /* Semi-transparent background */
+            background-color: rgba(0, 0, 0, 0.75);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000; /* Ensure it's on top of everything */
+            z-index: 1000;
         }
 
         .popup-content {
@@ -125,7 +121,7 @@
         }
 
         .popup-button {
-            background-color: #4caf50; /* Green */
+            background-color: #4caf50;
             color: white;
             padding: 0.75rem 1.5rem;
             border: none;
@@ -168,7 +164,7 @@
             <template x-for="row in 10" :key="row">
                 <template x-for="col in 8" :key="`${row}-${col}`">
                     <div                     
-                        class="w-14 h-14 bg-gray-100 relative pixel-border overflow-hidden cursor-pointer"
+                        class="w-10 h-10 sm:w-14 sm:h-14 bg-gray-100 relative pixel-border overflow-hidden cursor-pointer"
                         @click="handleCellClick(row, col)"
                         :class="{ 'selected': selectedCell.includes(`${row}-${col}`) }">
                         <template x-if="atoms[`${row}-${col}`]">
@@ -562,7 +558,6 @@
                         </filter>
                     </defs>
 
-                    <!-- Wrap everything in one centered group -->
                     <g transform="translate(24, 16)">
                         <!-- Oxygen -->
                         <g>
